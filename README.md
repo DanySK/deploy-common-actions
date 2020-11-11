@@ -1,87 +1,97 @@
-# Deploy Common Actions
-Push a common Github Action yaml script from a centralized repository to many repositories. For use in a repo where your primary action is contained. For example, if you or your organization has 20 repos of Android applications, all of which build in a similar way, you can utilize one master yaml script, and deploy that script to each repo with this action.
+# Autodelivery
+#### This action has been inspired by "Deploy Common Actions"
 
-If you have 30 repos, utilize this action 30 times in your yaml script to push out a common Github Action workflow. Helpful for those organizations working on a large number of similar applications.
+## What it does
+Updates common files across multiple repositories in one shot.
 
+## Exemplary use case
+Imagine you got multiple repositories with the same continuous integration configuration (e.g., the same `.travis.yml` or github workflow files).
+Now, every time you want to make a change, you probably want to propagate it across the board.
+And doing it requires *precious time* to be spent for a *repetitive action*.
 
-## Action Inputs
-- **GITHUB_TOKEN**: Required. Typically this will be `${{ secrets.GITHUB_TOKEN }}`.
-- **USER**: Required. User or organization owning the repository where you are deploying the Github Action.
-- **REPOSITORY**: Required. User and name of the repository to pull the release. Currently, you must have permissions to create and merge PRs in that repository. Future updates will include a flag to allow pulling from any public repository.
-- **DEVELOPMENT_BRANCH**: Required. Set to the development branch of the repository you are pulling from, i.e., 'develop' or 'integration'.
-- **COMMIT_MESSAGE**: Optional. Custom message for commit. Default message: Updating Github Action workflows.
-- **GHA_DEPLOY_BRANCH_NAME**: Optional. Name of the branch to be created. Default branch name: update_gha_source.
+## Action inputs and configuration
 
-## Action Outputs
-- **NONE**
+* `token`: Github secret token. Must be a user token, GH Actions tokens won't work. 
+You need at least `public_repo` to work with private repositories and `repo` to work with private repositories.
+In case you want to push changes to your GitHub Actions workflows, also check the `workflows` permission.
+* `user`: "GitHub username of the user performing the delivery. Defaults internally to GITHUB_ACTOR in case it's unspecified"
+* `configuration_file`: Path to the Autodelivery YAML configuration file (whose syntax is described later on), relative to the local repository root.
+Defaults to 'auto-delivery.yml'"
+* `commit_author`: "Committer's name. Defaults to `Autodelivery [bot]`
+* `author_email`: "Commiter's email. Defaults to `autodelivery@autodelivery.bot`
 
-## Configuration
+This action has no outputs.
+
+### Repository structure
+
+You are expected to define one payload per folder.
+The contents of the folder will be copied inside the target repositories defined in the YAML configuration file.
+
+```
+.
+├── .github/workflow/deploy.yml # Your workflow to deploy the script, as shown in the example below.
+├── my-common-travis-stuff # A common workflow 
+|   └──  .travis.yml
+├── some-standard-gradle-project # A common workflow 
+|   └── gradle
+|   |   ├── wrapper.jar
+|   |   └── gradle-wrapper.properties
+|   ├── build.gradle.kts
+|   └── settings.gradle.kts
+├── a-github-actions-example # A common workflow 
+|   └── .github
+|       └── workflows
+|           ├── my-action-1.yml
+|           └── my-action-2.yml
+└── auto-delivery.yml
+```
+
+### YAML configuration file
+
+The YAML configuration file tells Autodelivery where to deliver which subfolder.
+For the previous example, the file might look like something like this:
 
 ```yaml
-my-common-code-1:
-  - owner1:
-    - repo1 # Defaults to 'master'
-    - repo2: develop
-    - repo3:
+my-common-travis-stuff: # same as the folder name
+  - owner1: # Can be a user or an organization
+    - repo1 # Repository name. If no branch is specified, the default is 'master'
+    - repo2: develop # A branch can be specified with a string
+    - repo3: # Multiple branches can be targeted by using a list
       - master
       - develop
-  - owner2: repo1
+  - owner2: repo1 # If you got a single repo you care of, and the master branch is fine, then just use a string
+some-standard-gradle-project:
+  someuser: a-gradle-repository
+a-github-actions-example:
+  - my-organization:
+    - a-repository-using-actions: develop
+    - another-repository-but-with-master-as-development-branch
+  - another-user-or-organization:
+    - yeah-you-got-how-it-works
 ```
 
-## Example
-Here's an example of how you can utilize this action and a recommended github folder structure:
+### GitHub Action
 
-    .
-    ├── .github/workflow/deploy.yml   # Your workflow to deploy the script, as shown in the example below.
-    ├── my-common-workflow            # Your common workflow you wish to deploy. 
-      └──  .github
-        └── workflows
-          └── action-to-deploy.yaml
-    └── README.md
-    
-This example will deploy your common Github Action workflow when the event type "deploy_updated_workflow" is sent:
+In order to use this action to automate the delivery, use a configuration such as:
 
-```yml
-name: Deploy Github Action
-
+```yaml
+name: Autodelivery
 on:
-  repository_dispatch:
-    types: [deploy_updated_workflow]
-
+  push:
 jobs:
-
-  build:
-  
+  autodelivery:
     runs-on: ubuntu-latest
-    
     steps:
-    
-    - name: Run the actions/checkout
-      uses: actions/checkout@722adc6
-      
-    - name: Deploy GHA to WN-SDK-TEMPORARY
-      uses: MikeHamilton-RW/deploy-common-actions@v1.0
-      env:
-        GITHUB_TOKEN: ${{ secrets.TOKEN }}
-        USER: "my-user-name-or-organization"
-        REPOSITORY: "my-repo"
-        DEVELOPMENT_BRANCH: "develop"
-        GHA_DEPLOYMENT_FOLDER: "gha-source"
-        COMMIT_MESSAGE: "Deploy new Github Action"
-        GHA_DEPLOY_BRANCH_NAME: "my_new_yaml_script_branch"
-    
+    - uses: DanySK/autodelivery@master
+      with:
+        # You can omit everything but token (mandatory) and user (recommended) if you are okay with the defaults
+        token: ${{ secrets.GH_TOKEN }}
+        user: DanySK
+        configuration_file: 'auto-delivery.yml'
+        commit_author: Danilo Pianini
+        author_email: danilo.pianini@gmail.com
 ```
 
-## Notes
-- Your token must have full permissions to the receiving repo. 
+### Running example
 
-
-## Trigger via repo dispatch
-- You probably don't want to deploy your script each time you push this yaml script, so I highly reccomend only run on repository_dispatch:
-```
-curl -H "Accept: application/vnd.github.everest-preview+json" \
-    -H "Authorization: token ${GITHUB_TOKEN}" \
-    --request POST \
-    --data '{"event_type": "deploy_updated_workflow"}' \
-    https://api.github.com/repos/:owner/:repo/dispatches
-```  
+Since it's easier done that said, and since I use this myself for my repositories, [here is an example](https://github.com/DanySK/gha-ci-centralized-automated-deployer).
