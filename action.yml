@@ -27,6 +27,8 @@ runs:
     - ${{ inputs.token }}
     - ${{ inputs.user }}
     - ${{ inputs.configuration_file }}
+    - ${{ inputs.commit_author }}
+    - ${{ inputs.author_email }}
 branding:
   icon: 'fast-forward'
   color: 'red'
