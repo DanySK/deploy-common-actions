@@ -12,6 +12,14 @@ inputs:
     description: "Path to the Autodelivery YAML configuration file in the local repository. Defaults to 'auto-delivery.yml'"
     required: false
     default: auto-delivery.yml
+  commit_author:
+    description: "Name of the committer"
+    required: false
+    default: "Autodelivery [bot]"
+  author_email:
+    description: "email of the committer"
+    required: false
+    default: 'autodelivery@autodelivery.bot'
 runs:
   using: "docker"
   image: "Dockerfile"

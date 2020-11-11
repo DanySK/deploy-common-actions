@@ -6,13 +6,18 @@ require 'yaml'
 require 'git'
 require 'octokit'
 
+puts 'Checking input parameters'
+github_token = ARGV[0] || raise('No GitHub token provided')
+github_user = ARGV[1] || ENV['GITHUB_ACTOR'] || raise("User required, no user specified.")
+config_file = ARGV[2] || 'auto-delivery.yml'
+committer = ARGV[3] || 'Autodelivery [bot]'
+email = ARGV[4] || 'autodelivery@autodelivery.bot'
+
 puts 'Computing workspace directory'
 workspace = ENV['GITHUB_WORKSPACE'] || raise('Mandatory GITHUB_WORKSPACE environment variable unset')
 Dir.empty?(workspace) || raise("#{workspace} not empty. Terminating to prevent unexpected side effects.")
 puts "Detected workspace: #{workspace}"
 
-github_user = ARGV[1] || ENV['GITHUB_ACTOR'] || raise("User required, no user specified.")
-github_token = ARGV[0] || raise('No GitHub token provided')
 puts "Configured user #{github_user}, authorizing Octokit..."
 client = Octokit::Client.new(:access_token => github_token)
 
@@ -27,7 +32,6 @@ origin_sha = origin_git.object('HEAD').sha[0,7]
 puts 'Clone complete'
 
 puts "Loading configuration"
-config_file = ARGV[2] || 'auto-delivery.yml'
 config_path = "#{source_folder}/#{config_file}"
 puts "Looking for file #{config_path}"
 configuration = YAML.load_file("#{config_path}")
@@ -70,6 +74,8 @@ sources.each do | delivery |
                         if git.status.added.empty? then
                             puts 'No change w.r.t. the current status'
                         else
+                            git.config('user.name', committer)
+                            git.config('user.email', email)
                             message = "Automatic delivery from #{origin_repo}@#{origin_sha}"
                             git.commit(message)
                             remote_uri = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
