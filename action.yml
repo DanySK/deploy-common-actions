@@ -9,9 +9,9 @@ inputs:
     description: "GitHub username of the user performing the delivery. Defaults internally to GITHUB_ACTOR"
     required: false
   configuration_file:
-    description: "Path to the Autodelivery YAML configuration file in the local repository. Defaults to 'autodelivery.yml'"
+    description: "Path to the Autodelivery YAML configuration file in the local repository. Defaults to 'auto-delivery.yml'"
     required: false
-    default: autodelivery.yml
+    default: auto-delivery.yml
 runs:
   using: "docker"
   image: "Dockerfile"

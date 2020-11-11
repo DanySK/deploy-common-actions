@@ -24,12 +24,13 @@ source_folder = "#{workspace}/#{origin_repo}"
 puts "Cloning from #{reference_clone_uri}"
 origin_git = Git.clone(reference_clone_uri, source_folder)
 origin_sha = origin_git.object('HEAD').sha[0,7]
-
 puts 'Clone complete'
 
 puts "Loading configuration"
 config_file = ARGV[2] || 'auto-delivery.yml'
-configuration = YAML.load_file("#{source_folder}/#{config_file}")
+config_path = "#{source_folder}/#{config_file}"
+puts "Looking for file #{config_path}"
+configuration = YAML.load_file("#{config_path}")
 
 puts 'Processing deliveries'
 sources = configuration.keys
