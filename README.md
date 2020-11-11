@@ -15,6 +15,18 @@ If you have 30 repos, utilize this action 30 times in your yaml script to push o
 ## Action Outputs
 - **NONE**
 
+## Configuration
+
+```yaml
+my-common-code-1:
+  - owner1:
+    - repo1 # Defaults to 'master'
+    - repo2: develop
+    - repo3:
+      - master
+      - develop
+  - owner2: repo1
+```
 
 ## Example
 Here's an example of how you can utilize this action and a recommended github folder structure:
