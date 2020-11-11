@@ -11,8 +11,8 @@ workspace = ENV['GITHUB_WORKSPACE'] || raise('Mandatory GITHUB_WORKSPACE environ
 Dir.empty?(workspace) || raise("#{workspace} not empty. Terminating to prevent unexpected side effects.")
 puts "Detected workspace: #{workspace}"
 
-github_user = ENV['GITHUB_USER'] || ENV['GITHUB_ACTOR'] || raise("User required, no user specified.")
-github_token = ENV['GITHUB_TOKEN'] || raise('No GitHub token provided')
+github_user = ARGV[1] || ENV['GITHUB_ACTOR'] || raise("User required, no user specified.")
+github_token = ARGV[0] || raise('No GitHub token provided')
 puts "Configured user #{github_user}, authorizing Octokit..."
 client = Octokit::Client.new(:access_token => github_token)
 
@@ -28,7 +28,7 @@ origin_sha = origin_git.object('HEAD').sha[0,7]
 puts 'Clone complete'
 
 puts "Loading configuration"
-config_file = ENV['CONFIGURATION_FILE'] || 'auto-delivery.yml'
+config_file = ARGV[2] || 'auto-delivery.yml'
 configuration = YAML.load_file("#{source_folder}/#{config_file}")
 
 puts 'Processing deliveries'

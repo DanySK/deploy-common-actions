@@ -2,15 +2,23 @@ name: "Autodelivery"
 description: "Deliver stuff from a single repository to multiple destinations."
 author: "Danilo Pianini"
 inputs:
-  GITHUB_TOKEN:
+  token:
     description: "Github secret token. Must be a user token, GH Actions tokens won't work"
-  GITHUB_USER:
-    description: "GitHub username of the user performing the delivery. Defaults to GITHUB_ACTOR"
-  CONFIGURATION_FILE:
-    description: "Path to the Autodelivery YAML configuration file in the local repository"
+    required: true
+  user:
+    description: "GitHub username of the user performing the delivery. Defaults internally to GITHUB_ACTOR"
+    required: false
+  configuration_file:
+    description: "Path to the Autodelivery YAML configuration file in the local repository. Defaults to 'autodelivery.yml'"
+    required: false
+    default: autodelivery.yml
 runs:
   using: "docker"
   image: "Dockerfile"
+  args:
+    - ${{ inputs.token }}
+    - ${{ inputs.user }}
+    - ${{ inputs.configuration_file }}
 branding:
   icon: 'fast-forward'
   color: 'red'
