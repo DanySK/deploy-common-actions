@@ -44,7 +44,7 @@ def arrayfy(object)
     object.kind_of?(Array) ? object : [object]
 end
 
-sources.each do | delivery |
+sources.each_with_index do | delivery, index |
     puts "Delivering #{delivery}"
     delivery_source_folder = "#{source_folder}/#{delivery}/."
     owners = arrayfy(configuration[delivery]) # array of owners
@@ -68,7 +68,7 @@ sources.each do | delivery |
                         destination = "#{workspace}/#{repo_slug}"
                         git = Git.clone(clone_url, destination)
                         git.checkout(branch)
-                        head_branch = "auto_delivery_from_#{origin_repo}@#{origin_sha}"
+                        head_branch = "autodelivery_#{index}_from_#{origin_repo}@#{origin_sha}"
                         git.branch(head_branch).checkout
                         # Update the destination with the delivery contents
                         FileUtils.cp_r(delivery_source_folder, destination)
