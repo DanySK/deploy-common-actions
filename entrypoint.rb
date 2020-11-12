@@ -76,13 +76,22 @@ sources.each do | delivery |
                         else
                             git.config('user.name', committer)
                             git.config('user.email', email)
-                            message = "Automatic delivery from #{origin_repo}@#{origin_sha}"
+                            message = "[Autodelivery] update #{delivery} from #{origin_repo}@#{origin_sha}"
                             git.commit(message)
                             remote_uri = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
                             authenticated_remote_name = 'authenticated'
                             git.add_remote(authenticated_remote_name, remote_uri)
                             git.push(authenticated_remote_name, head_branch)
-                            client.create_pull_request(repo_slug, branch, head_branch, message)
+                            body = <<~PULL_REQUEST_BOODY
+                                This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery),
+                                working at your service.
+                                
+                                To the best of this bot's understanding, it updates a content described as #{delivery},
+                                updating it to the same version of #{origin_repo}@#{origin_sha}.
+                                
+                                Hope it helps!
+                            PULL_REQUEST_BODY
+                            client.create_pull_request(repo_slug, branch, head_branch, message, body)
                         end
                     end
                 end
