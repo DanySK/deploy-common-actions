@@ -86,11 +86,11 @@ sources.each do | delivery |
                             git.push(authenticated_remote_name, head_branch)
                             # Create a pull request
                             body = <<~PULL_REQUEST_BODY
-                                This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery),
-                                working at your service.
+                                This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery), at your service.
                                 
-                                To the best of this bot's understanding, it updates a content described as #{delivery},
-                                updating it to the same version of #{origin_repo}@#{origin_sha}.
+                                To the best of this bot's understanding, it updates a content described as
+                                > #{delivery}
+                                and this PR updates it to the same version of #{origin_repo}@#{origin_sha}.
                                 
                                 Hope it helps!
                             PULL_REQUEST_BODY
