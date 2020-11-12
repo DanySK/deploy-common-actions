@@ -73,7 +73,7 @@ sources.each do | delivery |
                         # Update the destination with the delivery contents
                         FileUtils.cp_r(delivery_source_folder, destination)
                         git.add('.')
-                        if git.status.added.empty? then
+                        if git.status.added.empty? && git.status.changed.empty? && git.status.deleted.empty? then
                             puts 'No change w.r.t. the current status'
                         else
                             git.config('user.name', committer)
