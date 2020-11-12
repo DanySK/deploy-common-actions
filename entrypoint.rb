@@ -37,7 +37,7 @@ puts "Looking for file #{config_path}"
 configuration = YAML.load_file("#{config_path}")
 
 puts 'Processing deliveries'
-sources = configuration.keys
+sources = configuration.keys.reject { | it | it.start_with?('_') }
 puts "This configuration contains #{sources.size} deliveries"
 
 def arrayfy(object)
