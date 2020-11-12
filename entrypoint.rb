@@ -85,7 +85,7 @@ sources.each do | delivery |
                             git.add_remote(authenticated_remote_name, remote_uri)
                             git.push(authenticated_remote_name, head_branch)
                             # Create a pull request
-                            body = <<~PULL_REQUEST_BOODY
+                            body = <<~PULL_REQUEST_BODY
                                 This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery),
                                 working at your service.
                                 
