@@ -52,7 +52,7 @@ sources.each do | delivery |
         if owner_configuration.kind_of?(Hash) then # single-entry hash
             if owner_configuration.size == 1 then
                 owner = owner_configuration.first.first
-                puts "Sending #{delivery} to #{owner}'s configured repositories'"
+                puts "Sending #{delivery} to #{owner}'s configured repositories"
                 repositories = arrayfy(owner_configuration.first[1])
                 repositories.each do | repository_configuration | # either string or hash
                     repository = repository_configuration.kind_of?(Hash) ? repository_configuration.first.first : repository_configuration
