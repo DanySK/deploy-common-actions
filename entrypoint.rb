@@ -61,6 +61,7 @@ sources.each do | delivery |
                         unless branch.kind_of?(String) then
                             raise "#{branch} is not a valid branch descriptor, expected a String"
                         end
+                        # Import the destination
                         repo_slug = "#{owner}/#{repository}"
                         puts "Delivering to #{repo_slug}:#{branch}"
                         clone_url = "#{github_server}/#{repo_slug}"
@@ -69,6 +70,7 @@ sources.each do | delivery |
                         git.checkout(branch)
                         head_branch = "auto_delivery_from_#{origin_repo}@#{origin_sha}"
                         git.branch(head_branch).checkout
+                        # Update the destination with the delivery contents
                         FileUtils.cp_r(delivery_source_folder, destination)
                         git.add('.')
                         if git.status.added.empty? then
@@ -82,6 +84,7 @@ sources.each do | delivery |
                             authenticated_remote_name = 'authenticated'
                             git.add_remote(authenticated_remote_name, remote_uri)
                             git.push(authenticated_remote_name, head_branch)
+                            # Create a pull request
                             body = <<~PULL_REQUEST_BOODY
                                 This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery),
                                 working at your service.
@@ -93,6 +96,8 @@ sources.each do | delivery |
                             PULL_REQUEST_BODY
                             client.create_pull_request(repo_slug, branch, head_branch, message, body)
                         end
+                        puts "Cleaning up #{destination}"
+                        FileUtils.rm_rf(Dir["#{destination}"])
                     end
                 end
             else
