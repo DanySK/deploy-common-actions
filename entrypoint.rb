@@ -49,11 +49,10 @@ sources.each_with_index do | delivery, index |
     delivery_source_folder = "#{source_folder}/#{delivery}/."
     owners = arrayfy(configuration[delivery]) # array of owners
     owners.each do | owner_configuration | # single entry hash or string
-        if owner_configuration.kind_of?(Hash) then # single-entry hash
-            if owner_configuration.size == 1 then
-                owner = owner_configuration.first.first
+        if owner_configuration.kind_of?(Hash) then
+            owner_configuration.each do | owner, repositories |
                 puts "Sending #{delivery} to #{owner}'s configured repositories"
-                repositories = arrayfy(owner_configuration.first[1])
+                repositories = arrayfy(repositories)
                 repositories.each do | repository_configuration | # either string or hash
                     repository = repository_configuration.kind_of?(Hash) ? repository_configuration.first.first : repository_configuration
                     branches = arrayfy(repository_configuration.kind_of?(Hash) ? repository_configuration.first[1] : 'master')
