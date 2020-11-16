@@ -2,108 +2,135 @@
 require 'rubygems'
 require 'bundler/setup'
 
-require 'yaml'
 require 'git'
 require 'octokit'
+require 'values'
+require 'yaml'
+
+class Delivery < Value.new(:index, :name, :owner, :repository, :branch)
+    def to_s
+        "<Delivery #{index}: #{name} to #{owner}/#{repository}@#{branch}>"
+    end
+end
+
+class Hash
+    def each_delivery
+        each_with_index do | delivery, index |
+            if delivery.kind_of?(Array)
+                delivery_name = delivery.first
+                owners = delivery.last
+                if owners.kind_of?(Hash)
+                    owners.each do | owner, repositories |
+                        case repositories
+                        when Hash
+                            repositories.each do | repository, branches |
+                                # Branches can be Hash, Array, String, or nil
+                                actual_branches = branches || 'master'
+                                actual_branches = case actual_branches
+                                    when String
+                                        [actual_branches]
+                                    when Hash
+                                        actual_branches.keys
+                                    when Array
+                                        actual_branches
+                                    else
+                                        raise "Expected nil, or String, or Array, or Hash for branches, but got #{branches}"
+                                    end
+                                actual_branches.each do | branch |
+                                    yield Delivery.new(index, delivery_name, owner, repository, branch)
+                                end
+                            end
+                        when String
+                            yield Delivery.new(index, delivery_name, owner, repositories, 'master')
+                        else
+                            raise "Expected a repositories descriptor (Hash) but got: #{delivery}"
+                        end
+                    end
+                else
+                    raise "Expected an owners descriptor (Hash) but got: #{delivery}"
+                end
+            else
+                raise "Expected a delivery (2-ple) but got: #{delivery}"
+            end
+        end
+    end
+end
 
 puts 'Checking input parameters'
 github_token = ARGV[0] || raise('No GitHub token provided')
-github_user = ARGV[1] || ENV['GITHUB_ACTOR'] || raise("User required, no user specified.")
-config_file = ARGV[2] || 'auto-delivery.yml'
-committer = ARGV[3] || 'Autodelivery [bot]'
-email = ARGV[4] || 'autodelivery@autodelivery.bot'
-
-puts 'Computing workspace directory'
-workspace = ENV['GITHUB_WORKSPACE'] || raise('Mandatory GITHUB_WORKSPACE environment variable unset')
-Dir.empty?(workspace) || raise("#{workspace} not empty. Terminating to prevent unexpected side effects.")
-puts "Detected workspace: #{workspace}"
-
-puts "Configured user #{github_user}, authorizing Octokit..."
+puts 'Authenticating with GitHub...'
 client = Octokit::Client.new(:access_token => github_token)
 
 puts 'Setting up a clone of the configuration'
 github_server = ENV['GITHUB_SERVER_URL'] || 'https://github.com'
 origin_repo = ENV['GITHUB_REPOSITORY'] || raise('Mandatory GITHUB_REPOSITORY environment variable unset')
-reference_clone_uri = "#{github_server}/#{origin_repo}"
+puts 'Computing workspace directory'
+workspace = ENV['GITHUB_WORKSPACE'] || raise('Mandatory GITHUB_WORKSPACE environment variable unset')
+Dir.empty?(workspace) || raise("#{workspace} not empty. Terminating to prevent unexpected side effects.")
 source_folder = "#{workspace}/#{origin_repo}"
+reference_clone_uri = "#{github_server}/#{origin_repo}"
 puts "Cloning from #{reference_clone_uri}"
 origin_git = Git.clone(reference_clone_uri, source_folder)
 origin_sha = origin_git.object('HEAD').sha[0,7]
 puts 'Clone complete'
-
 puts "Loading configuration"
+config_file = ARGV[2] || 'auto-delivery.yml'
 config_path = "#{source_folder}/#{config_file}"
 puts "Looking for file #{config_path}"
 configuration = YAML.load_file("#{config_path}")
+configuration.kind_of?(Hash) || raise("Configuration is not a Hash: #{configuration}")
+file_deliveries = configuration['files'] || puts('No file deliveries') || {}
 
-puts 'Processing deliveries'
-sources = configuration.keys.reject { | it | it.start_with?('_') }
-puts "This configuration contains #{sources.size} deliveries"
+unless file_deliveries.empty?
+    github_user = ARGV[1] || ENV['GITHUB_ACTOR'] || raise("User required, no user specified.")
+    committer = ARGV[3] || 'Autodelivery [bot]'
+    email = ARGV[4] || 'autodelivery@autodelivery.bot'    
+    puts "Detected workspace: #{workspace}"
+    file_deliveries.each_delivery do | delivery |
+        puts "Delivering #{delivery}"
+        delivery_source_folder = "#{source_folder}/#{delivery.name}/."
+        repo_slug = "#{delivery.owner}/#{delivery.repository}"
+        clone_url = "#{github_server}/#{repo_slug}"
+        destination = "#{workspace}/#{repo_slug}"
+        git = Git.clone(clone_url, destination)
+        git.checkout(delivery.branch)
+        head_branch = "autodelivery_#{delivery.index}_from_#{origin_repo}@#{origin_sha}"
+        git.branch(head_branch).checkout
+        FileUtils.cp_r(delivery_source_folder, destination)
+        git.add('.')
+        if git.status.added.empty? && git.status.changed.empty? && git.status.deleted.empty? then
+            puts 'No change w.r.t. the current status'
+        else
+            git.config('user.name', committer)
+            git.config('user.email', email)
+            message = "[Autodelivery] update #{delivery.name} from #{origin_repo}@#{origin_sha}"
+            git.commit(message)
+            remote_uri = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
+            authenticated_remote_name = 'authenticated'
+            git.add_remote(authenticated_remote_name, remote_uri)
+            git.push(authenticated_remote_name, head_branch)
+            # Create a pull request
+            body = <<~PULL_REQUEST_BODY
+                This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery), at your service.
+                
+                To the best of this bot's understanding, it updates a content described as
+                
+                > #{delivery.name}
 
-def arrayfy(object)
-    object.kind_of?(Array) ? object : [object]
+                and this PR updates it to the same version of #{origin_repo}@#{origin_sha}.
+                
+                Hope it helps!
+            PULL_REQUEST_BODY
+            client.create_pull_request(repo_slug, delivery.branch, head_branch, message, body)
+        end
+        puts "Cleaning up #{destination}"
+        FileUtils.rm_rf(Dir["#{destination}"])
+    end
 end
 
-sources.each_with_index do | delivery, index |
-    puts "Delivering #{delivery}"
-    delivery_source_folder = "#{source_folder}/#{delivery}/."
-    owners = arrayfy(configuration[delivery]) # array of owners
-    owners.each do | owner_configuration | # single entry hash or string
-        if owner_configuration.kind_of?(Hash) then
-            owner_configuration.each do | owner, repositories |
-                puts "Sending #{delivery} to #{owner}'s configured repositories"
-                repositories = arrayfy(repositories)
-                repositories.each do | repository_configuration | # either string or hash
-                    repository = repository_configuration.kind_of?(Hash) ? repository_configuration.first.first : repository_configuration
-                    branches = arrayfy(repository_configuration.kind_of?(Hash) ? repository_configuration.first[1] : 'master')
-                    branches.each do | branch |
-                        unless branch.kind_of?(String) then
-                            raise "#{branch} is not a valid branch descriptor, expected a String"
-                        end
-                        # Import the destination
-                        repo_slug = "#{owner}/#{repository}"
-                        puts "Delivering to #{repo_slug}:#{branch}"
-                        clone_url = "#{github_server}/#{repo_slug}"
-                        destination = "#{workspace}/#{repo_slug}"
-                        git = Git.clone(clone_url, destination)
-                        git.checkout(branch)
-                        head_branch = "autodelivery_#{index}_from_#{origin_repo}@#{origin_sha}"
-                        git.branch(head_branch).checkout
-                        # Update the destination with the delivery contents
-                        FileUtils.cp_r(delivery_source_folder, destination)
-                        git.add('.')
-                        if git.status.added.empty? && git.status.changed.empty? && git.status.deleted.empty? then
-                            puts 'No change w.r.t. the current status'
-                        else
-                            git.config('user.name', committer)
-                            git.config('user.email', email)
-                            message = "[Autodelivery] update #{delivery} from #{origin_repo}@#{origin_sha}"
-                            git.commit(message)
-                            remote_uri = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
-                            authenticated_remote_name = 'authenticated'
-                            git.add_remote(authenticated_remote_name, remote_uri)
-                            git.push(authenticated_remote_name, head_branch)
-                            # Create a pull request
-                            body = <<~PULL_REQUEST_BODY
-                                This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery), at your service.
-                                
-                                To the best of this bot's understanding, it updates a content described as
-                                > #{delivery}
-                                and this PR updates it to the same version of #{origin_repo}@#{origin_sha}.
-                                
-                                Hope it helps!
-                            PULL_REQUEST_BODY
-                            client.create_pull_request(repo_slug, branch, head_branch, message, body)
-                        end
-                        puts "Cleaning up #{destination}"
-                        FileUtils.rm_rf(Dir["#{destination}"])
-                    end
-                end
-            end
-        else
-            puts "#{owner_configuration} not a Ruby Hash, skipping"
-        end
-    end
+secrets_deliveries = configuration['secrets'] || puts('No secrets deliveries') || {}
+secrets_deliveries.each_delivery do | delivery |
+    puts "Unimplemented secrets delivery for #{delivery}"
 end
 
 puts 'Cleaning the workspace directory'

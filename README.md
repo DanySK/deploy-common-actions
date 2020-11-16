@@ -52,22 +52,23 @@ The YAML configuration file tells Autodelivery where to deliver which subfolder.
 For the previous example, the file might look like something like this:
 
 ```yaml
-my-common-travis-stuff: # same as the folder name
-  - owner1: # Can be a user or an organization
-    - repo1 # Repository name. If no branch is specified, the default is 'master'
-    - repo2: develop # A branch can be specified with a string
-    - repo3: # Multiple branches can be targeted by using a list
-      - master
-      - develop
-  - owner2: repo1 # If you got a single repo you care of, and the master branch is fine, then just use a string
-some-standard-gradle-project:
-  someuser: a-gradle-repository
-a-github-actions-example:
-  - my-organization:
-    - a-repository-using-actions: develop
-    - another-repository-but-with-master-as-development-branch
-  - another-user-or-organization:
-    - yeah-you-got-how-it-works
+files:
+  my-common-travis-stuff: # same as the folder name
+    owner1: # Can be a user or an organization
+      repo1: # Repository name. If no branch is specified, the default is 'master'
+      repo2: develop # A branch can be specified with a string
+      repo3: # Multiple branches can be targeted by using a list
+        - master
+        - develop
+    owner2: repo1 # If you got a single repo you care of, and the master branch is fine, then just use a string
+  some-standard-gradle-project:
+    someuser: a-gradle-repository
+  a-github-actions-example:
+    my-organization:
+      a-repository-using-actions: develop
+      another-repository-but-with-master-as-development-branch:
+    another-user-or-organization:
+      yeah-you-got-how-it-works: master
 ```
 
 ### GitHub Action
@@ -82,7 +83,7 @@ jobs:
   autodelivery:
     runs-on: ubuntu-latest
     steps:
-    - uses: DanySK/autodelivery@master
+    - uses: DanySK/autodelivery@master # Replace with a version!
       with:
         # You can omit everything but token (mandatory) and user (recommended) if you are okay with the defaults
         token: ${{ secrets.GH_TOKEN }}
