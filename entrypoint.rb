@@ -99,8 +99,6 @@ sources.each_with_index do | delivery, index |
                         FileUtils.rm_rf(Dir["#{destination}"])
                     end
                 end
-            else
-                puts "Unexpected owner configuration #{owner_configuration}, Hash has multiple values"
             end
         else
             puts "#{owner_configuration} not a Ruby Hash, skipping"
