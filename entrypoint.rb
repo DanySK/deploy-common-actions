@@ -144,7 +144,7 @@ known_keys = {}
 secrets_deliveries = configuration['secrets'] || puts('No secrets deliveries') || {}
 secrets_deliveries.each_delivery do | delivery |
     repo_slug = "#{delivery.owner}/#{delivery.repository}"
-    puts "Loading public key for #{repo_slug}"
+    puts "Loading public key for #{repo_slug}."
     pubkey = known_keys[repo_slug] || client.get_public_key(repo_slug)
     known_keys[repo_slug] = pubkey
     key = Base64.decode64(pubkey.key)
