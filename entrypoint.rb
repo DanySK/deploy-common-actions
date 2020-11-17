@@ -4,6 +4,7 @@ require 'bundler/setup'
 
 require 'git'
 require 'octokit'
+require 'rbnacl'
 require 'values'
 require 'yaml'
 
@@ -61,10 +62,10 @@ end
 # Common configuration
 puts 'Checking input parameters'
 github_token = ARGV[0] || raise('No GitHub token provided')
-github_server = ENV['GITHUB_SERVER_URL'] || 'https://github.com'
-puts "Configuring API access, selected endpoint is #{github_server}"
+github_api_endpoint = ENV['GITHUB_API_URL'] || 'https://api.github.com'
+puts "Configuring API access, selected endpoint is #{github_api_endpoint}"
 Octokit.configure do | conf |
-    conf.api_endpoint = github_server
+    conf.api_endpoint = github_api_endpoint
 end
 puts 'Authenticating with GitHub...'
 client = Octokit::Client.new(:access_token => github_token)
@@ -74,6 +75,7 @@ puts 'Computing workspace directory'
 workspace = ENV['GITHUB_WORKSPACE'] || raise('Mandatory GITHUB_WORKSPACE environment variable unset')
 Dir.empty?(workspace) || raise("#{workspace} not empty. Terminating to prevent unexpected side effects.")
 source_folder = "#{workspace}/#{origin_repo}"
+github_server = ENV['GITHUB_SERVER_URL'] || 'https://github.com'
 reference_clone_uri = "#{github_server}/#{origin_repo}"
 puts "Cloning from #{reference_clone_uri}"
 origin_git = Git.clone(reference_clone_uri, source_folder)
@@ -85,9 +87,29 @@ config_path = "#{source_folder}/#{config_file}"
 puts "Looking for file #{config_path}"
 configuration = YAML.load_file("#{config_path}")
 configuration.kind_of?(Hash) || raise("Configuration is not a Hash: #{configuration}")
-file_deliveries = configuration['files'] || puts('No file deliveries') || {}
+
+# Secrets deliveries
+known_keys = {}
+secrets_deliveries = configuration['secrets'] || puts('No secrets deliveries') || {}
+secrets_deliveries.each_delivery do | delivery |
+    repo_slug = "#{delivery.owner}/#{delivery.repository}"
+    puts "Loading public key for #{repo_slug}."
+    pubkey = known_keys[repo_slug] || client.get_public_key(repo_slug)
+    known_keys[repo_slug] = pubkey
+    key = Base64.decode64(pubkey.key)
+    puts "Key decoded, preparing encryption box"
+    sodium_box = RbNaCl::Boxes::Sealed.from_public_key(key)
+    puts "Box is ready, encrypting"
+    encrypted_value = sodium_box.encrypt(
+        ENV[delivery.name] || raise("Secret named #{delivery.name} is unavailable as enviroment variable, it can't get pushed anywhere")
+    )
+    puts "Secret #{delivery.name} encrypted, preparing payload"
+    payload = { 'key_id' => pubkey.key_id, 'encrypted_value' => Base64.strict_encode64(encrypted_value) }
+    client.create_or_update_secret(repo_slug, delivery.name, payload)
+end
 
 # File deliveries
+file_deliveries = configuration['files'] || puts('No file deliveries') || {}
 unless file_deliveries.empty?
     github_user = ARGV[1] || ENV['GITHUB_ACTOR'] || raise("User required, no user specified.")
     committer = ARGV[3] || 'Autodelivery [bot]'
@@ -137,26 +159,6 @@ unless file_deliveries.empty?
         puts "Cleaning up #{destination}"
         FileUtils.rm_rf(Dir["#{destination}"])
     end
-end
-
-# Secrets deliveries
-known_keys = {}
-secrets_deliveries = configuration['secrets'] || puts('No secrets deliveries') || {}
-secrets_deliveries.each_delivery do | delivery |
-    repo_slug = "#{delivery.owner}/#{delivery.repository}"
-    puts "Loading public key for #{repo_slug}."
-    pubkey = known_keys[repo_slug] || client.get_public_key(repo_slug)
-    known_keys[repo_slug] = pubkey
-    key = Base64.decode64(pubkey.key)
-    puts "Key decoded, preparing encryption box"
-    sodium_box = RbNaCl::Boxes::Sealed.from_public_key(key)
-    puts "Box is ready, encrypting"
-    encrypted_value = box.encrypt(
-        ENV[delivery.name] || raise("Secret named #{delivery_name} is unavailable as enviroment variable, it can't get pushed anywhere")
-    )
-    puts "Secret #{delivery.name} encrypted, preparing payload"
-    payload = { 'key_id' => pubkey.key_id, 'encrypted_value' => Base64.strict_encode64(encrypted_value) }
-    client.create_or_update_secret(repo_slug, delivery.name, payload)
 end
 
 # Cleanup
