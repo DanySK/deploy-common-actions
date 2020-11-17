@@ -100,35 +100,39 @@ unless file_deliveries.empty?
         clone_url = "#{github_server}/#{repo_slug}"
         destination = "#{workspace}/#{repo_slug}"
         git = Git.clone(clone_url, destination)
-        git.checkout(delivery.branch)
         head_branch = "autodelivery_#{delivery.index}_from_#{origin_repo}@#{origin_sha}"
-        git.branch(head_branch).checkout
-        FileUtils.cp_r(delivery_source_folder, destination)
-        git.add('.')
-        if git.status.added.empty? && git.status.changed.empty? && git.status.deleted.empty? then
-            puts 'No change w.r.t. the current status'
+        if git.branches["origin/#{head_branch}"] then
+            puts "Branch #{head_branch} already exists on origin: skipping delivery"
         else
-            git.config('user.name', committer)
-            git.config('user.email', email)
-            message = "[Autodelivery] update #{delivery.name} from #{origin_repo}@#{origin_sha}"
-            git.commit(message)
-            remote_uri = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
-            authenticated_remote_name = 'authenticated'
-            git.add_remote(authenticated_remote_name, remote_uri)
-            git.push(authenticated_remote_name, head_branch)
-            # Create a pull request
-            body = <<~PULL_REQUEST_BODY
-                This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery), at your service.
-                
-                To the best of this bot's understanding, it updates a content described as
-                
-                > #{delivery.name}
-
-                and this PR updates it to the same version of #{origin_repo}@#{origin_sha}.
-                
-                Hope it helps!
-            PULL_REQUEST_BODY
-            client.create_pull_request(repo_slug, delivery.branch, head_branch, message, body)
+            git.checkout(delivery.branch)
+            git.branch(head_branch).checkout
+            FileUtils.cp_r(delivery_source_folder, destination)
+            git.add('.')
+            if git.status.added.empty? && git.status.changed.empty? && git.status.deleted.empty? then
+                puts 'No change w.r.t. the current status'
+            else
+                git.config('user.name', committer)
+                git.config('user.email', email)
+                message = "[Autodelivery] update #{delivery.name} from #{origin_repo}@#{origin_sha}"
+                git.commit(message)
+                remote_uri = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
+                authenticated_remote_name = 'authenticated'
+                git.add_remote(authenticated_remote_name, remote_uri)
+                git.push(authenticated_remote_name, head_branch)
+                # Create a pull request
+                body = <<~PULL_REQUEST_BODY
+                    This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery), at your service.
+                    
+                    To the best of this bot's understanding, it updates a content described as
+                    
+                    > #{delivery.name}
+    
+                    and this PR updates it to the same version of #{origin_repo}@#{origin_sha}.
+                    
+                    Hope it helps!
+                PULL_REQUEST_BODY
+                client.create_pull_request(repo_slug, delivery.branch, head_branch, message, body)
+            end
         end
         puts "Cleaning up #{destination}"
         FileUtils.rm_rf(Dir["#{destination}"])
