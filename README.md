@@ -2,12 +2,14 @@
 #### This action has been inspired by "Deploy Common Actions"
 
 ## What it does
-Updates common files across multiple repositories in one shot.
+Updates common files and secrets across multiple repositories in one shot.
 
 ## Exemplary use case
 Imagine you got multiple repositories with the same continuous integration configuration (e.g., the same `.travis.yml` or github workflow files).
 Now, every time you want to make a change, you probably want to propagate it across the board.
-And doing it requires *precious time* to be spent for a *repetitive action*.
+In the case you are propagating a GitHub Actions workflow, you are presumably also setting up signign keys and similar stuff.
+And doing it requires *precious time* to be spent for a *repetitive action*: unacceptable.
+This action is here to help.
 
 ## Action inputs and configuration
 
@@ -46,6 +48,13 @@ The contents of the folder will be copied inside the target repositories defined
 └── auto-delivery.yml
 ```
 
+### Propagating secrets
+
+Secrets propagation is performed using environment variables:
+the secret you want to propagate must be available in the repository hosting this action
+(of course, otherwise it would be impossible to access)
+into an environment variable with the same name of the target secret variable.
+
 ### YAML configuration file
 
 The YAML configuration file tells Autodelivery where to deliver which subfolder.
@@ -69,6 +78,10 @@ files:
       another-repository-but-with-master-as-development-branch:
     another-user-or-organization:
       yeah-you-got-how-it-works: master
+secrets:
+  MY_SECRET_VARIABLE: # Must be an environment variable that is available when the action is performed
+    some-owner: some-repository
+    same-syntax-as-files: you-can-be-DRY-using-anchors-and-merge-keys
 ```
 
 ### GitHub Action
