@@ -62,6 +62,9 @@ end
 # Common configuration
 puts 'Checking input parameters'
 github_token = ARGV[0] || raise('No GitHub token provided')
+if github_token.size < 20 then
+    raise "The provided GitHub is just #{github_token.size} characters long, this does not seem right."
+end
 github_api_endpoint = ENV['GITHUB_API_URL'] || 'https://api.github.com'
 puts "Configuring API access, selected endpoint is #{github_api_endpoint}"
 Octokit.configure do | conf |
