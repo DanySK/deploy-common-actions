@@ -21,7 +21,7 @@ class Hash
         each_with_index do | delivery, index |
             if delivery.kind_of?(Array)
                 delivery_name = delivery.first
-                owners = delivery.last
+                owners = delivery.last || {}
                 if owners.kind_of?(Hash)
                     owners.each do | owner, repositories |
                         case repositories
