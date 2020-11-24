@@ -16,11 +16,13 @@ This action is here to help.
 * `token`: Github secret token. Must be a user token, GH Actions tokens won't work. 
 You need at least `public_repo` to work with private repositories and `repo` to work with private repositories.
 In case you want to push changes to your GitHub Actions workflows, also check the `workflows` permission.
-* `user`: "GitHub username of the user performing the delivery. Defaults internally to GITHUB_ACTOR in case it's unspecified"
+* `user`: GitHub username of the user performing the delivery. Defaults internally to GITHUB_ACTOR in case it's unspecified
 * `configuration_file`: Path to the Autodelivery YAML configuration file (whose syntax is described later on), relative to the local repository root.
-Defaults to 'auto-delivery.yml'"
-* `commit_author`: "Committer's name. Defaults to `Autodelivery [bot]`
-* `author_email`: "Commiter's email. Defaults to `autodelivery@autodelivery.bot`
+Defaults to 'auto-delivery.yml'
+* `commit_author`: Committer's name. Defaults to `Autodelivery [bot]`
+* `author_email`: Commiter's email. Defaults to `autodelivery@autodelivery.bot`
+* `labels`: Comma separated list of labels to apply to the pull request. Defaults to ''. Non existing labels will be created using the color in colors (if a color positionally matches the label) or generating a random color.
+* `colors`: Comma separated list of colors, in HTML format (six hexadecimal entries, e.g., 'fa1234')
 
 This action has no outputs.
 

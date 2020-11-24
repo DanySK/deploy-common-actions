@@ -20,6 +20,15 @@ inputs:
     description: "email of the committer"
     required: false
     default: 'autodelivery@autodelivery.bot'
+  labels:
+    description: "Labels to add to the pull requests"
+    required: false
+    default: ' '
+  colors:
+    description: "Colors for the labels. Should be of the same length of labels, six-chars long hex string"
+    required: false
+    default: ' '
+
 runs:
   using: "docker"
   image: "Dockerfile"
@@ -29,6 +38,8 @@ runs:
     - ${{ inputs.configuration_file }}
     - ${{ inputs.commit_author }}
     - ${{ inputs.author_email }}
+    - ${{ inputs.labels }}
+    - ${{ inputs.colors }}
 branding:
   icon: 'fast-forward'
   color: 'red'

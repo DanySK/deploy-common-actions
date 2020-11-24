@@ -117,7 +117,17 @@ unless file_deliveries.empty?
     github_user = ARGV[1] || ENV['GITHUB_ACTOR'] || raise("User required, no user specified.")
     committer = ARGV[3] || 'Autodelivery [bot]'
     email = ARGV[4] || 'autodelivery@autodelivery.bot'    
-    puts "Detected workspace: #{workspace}"
+    labels = (ARGV[5] || '').split(',').map(&:strip)
+    color_regex = /(?:[0-F]|[a-f]){6}/
+    colors = (ARGV[6] || '').split(',').map(&:strip).each { | color |
+        unless color =~ color_regex then
+            raise "invalid color code #{color}, must match #{color_regex}"
+        end
+    }
+    labels_and_colors = labels.zip(colors).map { | label, color |
+        [label, color || "%06X" % rand(16.pow(6))]
+    }
+    puts "Every pull request will be labeled with #{labels_and_colors}" 
     file_deliveries.each_delivery do | delivery |
         puts "Delivering #{delivery}"
         delivery_source_folder = "#{source_folder}/#{delivery.name}/."
@@ -156,7 +166,18 @@ unless file_deliveries.empty?
                     
                     Hope it helps!
                 PULL_REQUEST_BODY
-                client.create_pull_request(repo_slug, delivery.branch, head_branch, message, body)
+                pull_request = client.create_pull_request(repo_slug, delivery.branch, head_branch, message, body)
+                unless labels_and_colors.empty? then
+                    repo_labels = client.labels(repo_slug).map(&:name)
+                    labels_and_colors.each do | label, color |
+                        unless repo_labels.include?(label) then
+                            puts "Creating label #{label} with color #{color}"
+                            client.add_label(repo_slug, label, color)
+                        end
+                    end
+                    puts "Marking #{repo_slug}##{pull_request.number} with labels #{labels}"
+                    client.add_labels_to_an_issue(repo_slug, pull_request.number, labels)
+                end
             end
         end
         puts "Cleaning up #{destination}"
