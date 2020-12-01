@@ -94,19 +94,20 @@ configuration.kind_of?(Hash) || raise("Configuration is not a Hash: #{configurat
 # Secrets deliveries
 known_keys = {}
 secrets_deliveries = configuration['secrets'] || puts('No secrets deliveries') || {}
+puts "Secrets to be delivered: #{secrets_deliveries}"
 secrets_deliveries.each_delivery do | delivery |
     repo_slug = "#{delivery.owner}/#{delivery.repository}"
-    puts "Loading public key for #{repo_slug}."
+    # puts "Loading public key for #{repo_slug}."
     pubkey = known_keys[repo_slug] || client.get_public_key(repo_slug)
     known_keys[repo_slug] = pubkey
     key = Base64.decode64(pubkey.key)
-    puts "Key decoded, preparing encryption box"
+    # puts "Key decoded, preparing encryption box"
     sodium_box = RbNaCl::Boxes::Sealed.from_public_key(key)
-    puts "Box is ready, encrypting"
+    # puts "Box is ready, encrypting"
     encrypted_value = sodium_box.encrypt(
         ENV[delivery.name] || raise("Secret named #{delivery.name} is unavailable as enviroment variable, it can't get pushed anywhere")
     )
-    puts "Secret #{delivery.name} encrypted, preparing payload"
+    puts "Secret #{delivery.name} encrypted, preparing payload for #{repo_slug}"
     payload = { 'key_id' => pubkey.key_id, 'encrypted_value' => Base64.strict_encode64(encrypted_value) }
     client.create_or_update_secret(repo_slug, delivery.name, payload)
 end
