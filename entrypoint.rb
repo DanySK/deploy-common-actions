@@ -110,11 +110,14 @@ secrets_deliveries.each_delivery do | delivery |
     puts "Secret #{delivery.name} encrypted, preparing payload for #{repo_slug}"
     payload = { 'key_id' => pubkey.key_id, 'encrypted_value' => Base64.strict_encode64(encrypted_value) }
     client.create_or_update_secret(repo_slug, delivery.name, payload)
+    puts "Secret #{delivery.name} delivered to #{repo_slug}"
 end
+
+puts "Secrets deliveries completed"
 
 # File deliveries
 file_deliveries = configuration['files'] || puts('No file deliveries') || {}
-unless file_deliveries.empty?
+unless file_deliveries.empty? then
     github_user = ARGV[1] || ENV['GITHUB_ACTOR'] || raise("User required, no user specified.")
     committer = ARGV[3] || 'Autodelivery [bot]'
     email = ARGV[4] || 'autodelivery@autodelivery.bot'    
