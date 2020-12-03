@@ -5,4 +5,5 @@ ADD Gemfile /Gemfile
 RUN bundle install
 ADD entrypoint.rb /entrypoint.rb
 RUN chmod +x /entrypoint.rb
+RUN git config --global credential.helper store
 ENTRYPOINT ["/entrypoint.rb"]
