@@ -138,6 +138,7 @@ unless file_deliveries.empty? then
         repo_slug = "#{delivery.owner}/#{delivery.repository}"
         clone_url = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
         destination = "#{workspace}/#{repo_slug}"
+        puts "Cloning from #{clone_url.gsub(github_token, "***")} to #{destination}"
         git = Git.clone(clone_url, destination)
         head_branch = "autodelivery_#{delivery.index}_from_#{origin_repo}@#{origin_sha}"
         if git.branches["origin/#{head_branch}"] then
