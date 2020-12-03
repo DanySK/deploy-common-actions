@@ -159,7 +159,7 @@ unless file_deliveries.empty? then
                 git.config('user.email', email)
                 message = "[Autodelivery] update #{delivery.name} from #{origin_repo}@#{origin_sha}"
                 git.commit(message)
-                git.push(head_branch)
+                git.push('origin', head_branch)
                 # Create a pull request
                 body = <<~PULL_REQUEST_BODY
                     This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery), at your service.
