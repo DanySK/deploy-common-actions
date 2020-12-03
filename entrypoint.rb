@@ -136,7 +136,7 @@ unless file_deliveries.empty? then
         puts "Delivering #{delivery}"
         delivery_source_folder = "#{source_folder}/#{delivery.name}/."
         repo_slug = "#{delivery.owner}/#{delivery.repository}"
-        clone_url = "#{github_server}/#{repo_slug}"
+        clone_url = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
         destination = "#{workspace}/#{repo_slug}"
         git = Git.clone(clone_url, destination)
         head_branch = "autodelivery_#{delivery.index}_from_#{origin_repo}@#{origin_sha}"
@@ -154,10 +154,7 @@ unless file_deliveries.empty? then
                 git.config('user.email', email)
                 message = "[Autodelivery] update #{delivery.name} from #{origin_repo}@#{origin_sha}"
                 git.commit(message)
-                remote_uri = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
-                authenticated_remote_name = 'authenticated'
-                git.add_remote(authenticated_remote_name, remote_uri)
-                git.push(authenticated_remote_name, head_branch)
+                git.push(head_branch)
                 # Create a pull request
                 body = <<~PULL_REQUEST_BODY
                     This pull request has been created automatically by [Autodelivery](https://github.com/DanySK/autodelivery), at your service.
