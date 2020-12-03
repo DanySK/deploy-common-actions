@@ -137,8 +137,12 @@ unless file_deliveries.empty? then
         delivery_source_folder = "#{source_folder}/#{delivery.name}/."
         repo_slug = "#{delivery.owner}/#{delivery.repository}"
         clone_url = "https://#{github_user}:#{github_token}@#{github_server.split('://').last}/#{repo_slug}"
+        censored_clone_url = clone_url.gsub(github_token, "<secret token>")
         destination = "#{workspace}/#{repo_slug}"
-        puts "Cloning from #{clone_url.gsub(github_token, "***")} to #{destination}"
+        unless clone_url.start_with?("https://#{github_user}") then
+            raise "URL does not start with the expected preamble: #{censored_clone_url}"
+        end
+        puts "Cloning from #{censored_clone_url} to #{destination}"
         git = Git.clone(clone_url, destination)
         head_branch = "autodelivery_#{delivery.index}_from_#{origin_repo}@#{origin_sha}"
         if git.branches["origin/#{head_branch}"] then
