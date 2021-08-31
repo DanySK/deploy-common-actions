@@ -6,7 +6,7 @@ require 'git'
 require 'octokit'
 require 'rbnacl'
 require 'yaml'
-require 'hash_deliveries.rb'
+require './hash_deliveries.rb'
 
 # Common configuration
 puts 'Checking input parameters'
