@@ -35,8 +35,8 @@ jobs:
           VERSION="$MAJOR.$MINOR.$(git rev-list --all --count)"
           echo Version has been computed as $VERSION
           echo VERSION="$VERSION" >> $GITHUB_ENV
-          echo docker build -t "$IMAGE_NAME:$IMAGE_VERSION" .
-          docker build -t "$IMAGE_NAME:$IMAGE_VERSION" .
+          echo docker build -t "$IMAGE_NAME:$VERSION" .
+          docker build -t "$IMAGE_NAME:$VERSION" .
       - name: Login to Docker Hub
         if: ${{ github.event_name != 'pull_request' }}
         env:
