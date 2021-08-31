@@ -1,0 +1,301 @@
+_alchemist_projects: &alchemist
+  Alchemist: develop
+  alchemist-primer:
+  Protelis-Incarnation-tutorial:
+  SAPERE-incarnation-tutorial:
+
+_protelis_projects: &protelis
+  Protelis: develop
+  Protelis-Demo:
+  Protelis-KDoc-generator: develop
+  Protelis-Parser: develop
+
+_my_latex: &my_latex
+  Course-Simulation-Basics:
+  Curriculum-Vitae:
+  Paper-2019-Coordination-Share-FastRep:
+  Paper-2019-Genetic-network-dsl:
+  Paper-2019-IEEE-Software-Protelis:
+  Paper-2019-LMCS-Share-FastRep:
+  Paper-2019-PMC-SmartCam:
+  Paper-2020-LMCS-TimeFluid:
+  Template-ACM-Article:
+  Template-Elsevier-Article:
+  Template-Elsevier-CAS-DC:
+  Template-IEEE-Computer-Society-Magazines:
+  Template-IEEE-Conference-Proceedings:
+  Template-LaTeX-achemso:
+  Template-LaTeX-CI:
+  Template-LaTeX-ERC:
+  Template-LaTeX-LMCS:
+  Template-LaTeX-LNCS:
+  Template-LaTeX-MDPI:
+
+_gradle_plugins: &gradle_plugins
+  git-sensitive-semantic-versioning-gradle-plugin:
+  gradle-latex:
+  maven-central-gradle-plugin:
+  refreshversions-aliases:
+
+_gradle_plugins_multi_os: &gradle_plugins_multi_os
+  DanySK:
+    Template-for-Gradle-Plugins:
+  
+
+_java_multi_os: &java_multi_os
+  <<: *gradle_plugins_multi_os
+  
+_my_java: &my_java
+  <<: *gradle_plugins
+  Aggregate-Computing-Backend:
+  Aggregate-Computing-Client:
+  Alchemist-experiments-startup:
+  alchemist-intellij-plugin:
+  boilerplate:
+  compute-my-taxes:
+  conrec:
+  Course-2021-Impresoft-Java-Concurrency:
+  DisCoTec-2021-Tutorial:
+  gson-extras:
+  java-quadtree:
+  jirf:
+  khttp:
+  listset:
+  oop-reporting-machinery:
+  OrchidForScience:
+  Test-Gradle-Version-Catalogs:
+  Template-for-Kotlin-Gradle-Projects:
+  Template-for-Kotlin-JVM-Projects:
+  Thread-Inheritable-Resource-Loader-for-Java:
+  upgradle:
+
+_java_multiplatform: &java_multiplatform
+  AGCT-DSL:
+    AGCT: develop
+  APICe-at-DISI:
+    PPS-ci-examples:
+    sample-javafx-project:
+    sample-gradle-project:
+      - master
+      - lesson
+  AlchemistSimulator:
+    *alchemist
+  DanySK:
+    <<: *my_java
+  Protelis:
+    *protelis
+
+_java11+: &java11_or_above
+  AlchemistSimulator:
+    *alchemist
+  APICe-at-DISI:
+    PPS-ci-examples:
+    sample-javafx-project:
+    sample-gradle-project:
+      - master
+      - lesson
+  DanySK:
+    Alchemist-experiments-startup:
+    jirf:
+    oop-reporting-machinery:
+    sportstracker:
+    tornadofx2:
+
+_java8-linux-only: &java8_linux
+  DanySK:
+    gradle-latex:
+    graphstream:
+
+_my_jekyll: &my_jekyll
+  danysk.github.io:
+  jekyll-freelancer-theme:
+  libri-antichi:
+  Template-Jekyll-Cayman:
+  Template-Jekyll-Vitae: gh-pages
+
+_my_docker_linux: &docker_linux
+  auto-latexdiff:
+  docker-linux-didattica:
+  docker-manjaro-linux-with-yay:
+  docker-manjaro-programming-cli-tools:
+  docker-manjaro-texlive:
+  docker-manjaro-with-zsh:
+  yaagha:
+
+_no_deployment: &no_deployment
+  DanySK:
+    graphstream-gs-algo:
+    graphstream-gs-core:
+    graphstream-gs-ui-swing:
+    oop-reporting-machinery:
+
+_automerge: &automerge
+  AGCT-DSL:
+    AGCT: develop
+  AlchemistSimulator:
+    *alchemist
+  APICe-at-DISI:
+    PPS-ci-examples:
+    sample-javafx-project:
+    sample-gradle-project:
+      - master
+      - lesson
+  DanySK:
+    <<: *my_java
+    <<: *my_latex
+    <<: *docker_linux
+    <<: *my_jekyll
+    Course-2021-Impresoft-Java-Concurrency:
+    Course-Laboratory-of-Software-Systems:
+    Gradle-Wrapper:
+  Fluidware-Project:
+    fluidware-project.github.io:
+  Protelis:
+    *protelis
+
+files:
+  Automerge on non-CI events:
+    *automerge
+
+  buildSrc infrastructure:
+    AlchemistSimulator:
+      Alchemist: develop
+    DanySK:
+      <<: *gradle_plugins
+      conrec:
+      gson-extras:
+      java-quadtree:
+      jirf:
+      khttp:
+      listset:
+      OrchidForScience:
+      Template-for-Kotlin-Gradle-Projects:
+      Template-for-Kotlin-JVM-Projects:
+      Thread-Inheritable-Resource-Loader-for-Java:
+      upgradle:
+    Protelis:
+      Protelis: develop
+      Protelis-Demo:
+      Protelis-KDoc-generator: develop
+
+  Compatibility check for Java 11 projects:
+    *java11_or_above
+
+  Compatibility check for Linux-only Java 8 projects:
+    *java8_linux
+
+  Disable deployment script:
+    *no_deployment
+
+  editor config:
+
+  git attributes:
+    AGCT-DSL:
+      AGCT: develop
+    AlchemistSimulator:
+      *alchemist
+    APICe-at-DISI:
+      PPS-ci-examples:
+      pps-ci-lab:
+      sample-javafx-project:
+      sample-gradle-project:
+        - master
+        - lesson
+    DanySK:
+      <<: *my_java
+      <<: *my_latex
+      <<: *docker_linux
+      <<: *my_jekyll
+      Course-Laboratory-of-Software-Systems:
+      Gradle-Wrapper:
+    gciatto-unibo:
+      thesis-template:
+    metaphori:
+      paper-2021-coordination-scafiweb:
+      paper-2021-jcee-optc:
+    Protelis:
+      *protelis
+
+  Gradle multi-OS build:
+    <<: java_multi_os
+
+  Java multiplatform continuous integration pipeline:
+    *java_multiplatform
+
+  Jekyllrb site build:
+    DanySK:
+      *my_jekyll
+    Fluidware-Project:
+      fluidware-project.github.io:
+
+  Kotlin QA for Gradle:
+    AlchemistSimulator:
+      Alchemist: develop
+    DanySK:
+      <<: *gradle_plugins
+      conrec:
+      OrchidForScience:
+      Template-for-Kotlin-Gradle-Projects:
+      Template-for-Kotlin-JVM-Projects:
+      Thread-Inheritable-Resource-Loader-for-Java:
+      upgradle:
+    Protelis:
+      Protelis: develop
+      Protelis-Demo:
+      Protelis-KDoc-generator: develop
+      
+  LaTeX build and delivery:
+    DanySK:
+      *my_latex
+    gciatto-unibo:
+      thesis-template:
+    metaphori:
+      paper-2021-coordination-scafiweb:
+      paper-2021-jcee-optc:
+
+  LaTeX diff:
+    DanySK:
+      *my_latex
+    gciatto-unibo:
+      thesis-template:
+    metaphori:
+      paper-2021-coordination-scafiweb:
+      paper-2021-jcee-optc:
+
+secrets:
+  AUTOMERGE_TOKEN:
+    *automerge
+
+  DOCKER_PASSWORD:
+    DanySK:
+      *docker_linux
+
+  GRADLE_PUBLISH_KEY:
+    - DanySK:
+        *gradle_plugins
+    - *gradle_plugins_multi_os
+
+  GRADLE_PUBLISH_SECRET:
+    - DanySK:
+        *gradle_plugins
+    - *gradle_plugins_multi_os
+
+  MAVEN_CENTRAL_PASSWORD:
+    - *java_multiplatform
+    - *java_multi_os
+
+  SIGNING_KEY:
+    - *java_multiplatform
+    - *java_multi_os
+
+  SIGNING_PASSWORD:
+    - *java_multiplatform
+    - *java_multi_os
+
+  SURGE_LOGIN:
+    AlchemistSimulator: Alchemist
+    Protelis: Protelis
+
+  SURGE_TOKEN:
+    AlchemistSimulator: Alchemist
+    Protelis: Protelis
