@@ -18,40 +18,53 @@ end
 # Extend Hashes by providing an iterator that interprets them as deliveries
 class Hash
     def each_delivery
+        def process_owners_hash(owners)
+            owners.each do | owner, repositories |
+                case repositories
+                when Hash
+                    repositories.each do | repository, branches |
+                        # Branches can be Hash, Array, String, or nil
+                        actual_branches = branches || 'master'
+                        actual_branches = case actual_branches
+                            when String
+                                [actual_branches]
+                            when Hash
+                                actual_branches.keys
+                            when Array
+                                actual_branches
+                            else
+                                raise "Expected nil, or String, or Array, or Hash for branches, but got #{branches}"
+                            end
+                        actual_branches.each do | branch |
+                            yield Delivery.new(index, delivery_name, owner, repository, branch)
+                        end
+                    end
+                when String
+                    yield Delivery.new(index, delivery_name, owner, repositories, 'master')
+                else
+                    raise "Expected a repositories descriptor (Hash) but got: #{delivery}"
+                end
+            end
+        end
+        def process_owners_list(owners)
+            owners.each do | owners_map |
+                process_owners(owners_map)
+            end
+        end
+        def process_owners(owners)
+            if owners.kind_of?(Hash)
+                process_owner_hash(owners)
+            elsif owner.kind_of?(Array)
+                process_owners_list(owners)
+            else
+                raise "Expected an owners descriptor (Hash) but got: #{delivery}"
+            end
+        end
         each_with_index do | delivery, index |
             if delivery.kind_of?(Array)
                 delivery_name = delivery.first
                 owners = delivery.last || {}
-                if owners.kind_of?(Hash)
-                    owners.each do | owner, repositories |
-                        case repositories
-                        when Hash
-                            repositories.each do | repository, branches |
-                                # Branches can be Hash, Array, String, or nil
-                                actual_branches = branches || 'master'
-                                actual_branches = case actual_branches
-                                    when String
-                                        [actual_branches]
-                                    when Hash
-                                        actual_branches.keys
-                                    when Array
-                                        actual_branches
-                                    else
-                                        raise "Expected nil, or String, or Array, or Hash for branches, but got #{branches}"
-                                    end
-                                actual_branches.each do | branch |
-                                    yield Delivery.new(index, delivery_name, owner, repository, branch)
-                                end
-                            end
-                        when String
-                            yield Delivery.new(index, delivery_name, owner, repositories, 'master')
-                        else
-                            raise "Expected a repositories descriptor (Hash) but got: #{delivery}"
-                        end
-                    end
-                else
-                    raise "Expected an owners descriptor (Hash) but got: #{delivery}"
-                end
+                process_owners(owners)
             else
                 raise "Expected a delivery (2-ple) but got: #{delivery}"
             end
