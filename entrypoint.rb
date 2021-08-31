@@ -18,7 +18,7 @@ end
 # Extend Hashes by providing an iterator that interprets them as deliveries
 class Hash
     def each_delivery
-        def process_owners_hash(index, owners)
+        def process_owners_hash(index, delivery_name, owners)
             owners.each do | owner, repositories |
                 case repositories
                 when Hash
@@ -46,16 +46,16 @@ class Hash
                 end
             end
         end
-        def process_owners_list(index, owners)
+        def process_owners_list(index, delivery_name, owners)
             owners.each do | owners_map |
                 process_owners(index, owners_map)
             end
         end
-        def process_owners(index, owners)
+        def process_owners(index, delivery_name, owners)
             if owners.kind_of?(Hash)
-                process_owners_hash(index, owners)
+                process_owners_hash(index, delivery_name, owners)
             elsif owner.kind_of?(Array)
-                process_owners_list(index, owners)
+                process_owners_list(index, delivery_name, owners)
             else
                 raise "Expected an owners descriptor (Hash) but got: #{delivery}"
             end
@@ -64,7 +64,7 @@ class Hash
             if delivery.kind_of?(Array)
                 delivery_name = delivery.first
                 owners = delivery.last || {}
-                process_owners(index, owners)
+                process_owners(index, delivery_name, owners)
             else
                 raise "Expected a delivery (2-ple) but got: #{delivery}"
             end
