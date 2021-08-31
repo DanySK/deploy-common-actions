@@ -53,7 +53,7 @@ class Hash
         end
         def process_owners(owners)
             if owners.kind_of?(Hash)
-                process_owner_hash(owners)
+                process_owners_hash(owners)
             elsif owner.kind_of?(Array)
                 process_owners_list(owners)
             else
