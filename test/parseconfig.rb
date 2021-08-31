@@ -1,4 +1,4 @@
-require '../hash_deliveries.rb'
+require_relative '../hash_deliveries'
 require 'yaml'
 
 Dir['../**/test/**.*ml'].filter { |file| file =~ /.+ya?ml/ }.each do | file |
