@@ -1,4 +1,4 @@
-FROM ruby:2.7.2
+FROM ruby:3.2.1
 RUN apt-get update -y
 RUN apt-get install libsodium-dev -y
 ADD Gemfile /Gemfile
